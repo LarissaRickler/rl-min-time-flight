@@ -79,7 +79,7 @@ in case there is a problem with electron [follow...](https://www.techomoro.com/h
 
 ## Optional
 
-To use the Jupiter notebooks in the example folder, iJulia must be installed in addition to Jupiter Notebook. To do this, go to the package manager in Julia again with ```]``` and write ```add iJulia```. Now Jupiter Notebook should be able to run the Julia examples.
+To use the Jupiter notebooks in the example folder, iJulia must be installed in addition to Jupiter Notebook. To do this, go to the package manager in Julia again with ```]``` and write ```add IJulia```. Now Jupiter Notebook should be able to run the Julia examples.
 
 
 
