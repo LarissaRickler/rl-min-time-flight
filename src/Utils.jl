@@ -1,3 +1,14 @@
+module Utils
+using LinearAlgebra;
+
+export calculateAngle
+
+function calculateAngle(a::Vector{T}, b::Vector{T}) where T
+    return acos(clamp(dot(a,b)/(norm(a)*norm(b)), -1, 1))
+end
+
+
+
 function testRotationMatrix(R)
 
     determinante = (det(R) ≈ 1)
@@ -48,3 +59,4 @@ normalize_data(x, mean, std) = (x .- mean) ./ (std .+ 1e-5);
 Quat2Rot(q) = transpose([2*(q[1]^2 + q[2]^2)-1 2*(q[2]*q[3] + q[1]*q[4]) 2*(q[2]*q[4] - q[1]*q[3]);
                      2*(q[2]*q[3] - q[1]*q[4]) 2*(q[1]^2 + q[3]^2)-1 2*(q[3]*q[4] + q[1]*q[2]);
                      2*(q[2]*q[4] + q[1]*q[3]) 2*(q[3]*q[4] - q[1]*q[2]) 2*(q[1]^2 + q[4]^2)-1])
+end
