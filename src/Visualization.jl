@@ -70,8 +70,8 @@ function set_actuators(name::AbstractString, actuators::AbstractVector{T}) where
 
     f_r = actuators[1]
     f_l = actuators[2]
-    δ_r = actuators[3]
-    δ_l = actuators[4]
+    δ_r = 0#actuators[3]
+    δ_l = 0#actuators[4]
     
 
     base = [0.05; 0.359; 0.0];
