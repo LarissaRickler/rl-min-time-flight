@@ -111,7 +111,8 @@ function rigid_body_simple(torque_B, force_B, x_W_0, v_B_0, R_W_0, ω_B_0, t_0, 
     # TODO: linear_damping = vtol_parameters["linear_damping"]
 
     # --------- Translation ------------------------------------
-    gravity = [0.0, 0.0, -9.81]
+    #gravity = [0.0, 0.0, -9.81]
+    gravity = [0.0, 0.0, 0]
     dv_W = (R_W_0 * force_B + (mass .* gravity)) .* (Δt / mass)
     v_W_0 = R_W_0 * v_B_0 # transform Body Velocity in World frame
     v_W_1 = v_W_0 + dv_W # integrate velocity
