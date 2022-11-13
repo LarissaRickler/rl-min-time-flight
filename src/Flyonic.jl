@@ -22,5 +22,8 @@ export vtol_model, init_eth_vtol_model, MC_model, init_MC_vtol_model
 include("VtolsConfig.jl");
 export eth_vtol_param, brett_vtol3_param, brett_simple_MC #, vtol_body_inertia_B, vtol_body_mass, brett_vtol3_parameters
 
+include("Utils.jl")
+using .Utils;
+export calculateAngle
 
 end # end of module
