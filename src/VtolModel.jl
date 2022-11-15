@@ -101,10 +101,8 @@ end
         # limits for motors and flaps
         actions = [ max(param["f_min"], min(actions[1], param["f_max"])),
                     max(param["f_min"], min(actions[2], param["f_max"])),
-                    0,
-                    0]
-                    #max(param["δ_min"], min(actions[3], param["δ_max"])),
-                    #max(param["δ_min"], min(actions[4], param["δ_max"]))]
+                    max(param["δ_min"], min(actions[3], param["δ_max"])),
+                    max(param["δ_min"], min(actions[4], param["δ_max"]))]
 
 
         angle_of_attack = atan(v_B[3] , v_B[1]); # angle of attack
