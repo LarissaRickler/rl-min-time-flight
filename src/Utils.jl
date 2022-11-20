@@ -4,7 +4,7 @@ using LinearAlgebra;
 export calculateAngle
 
 function calculateAngle(a::Vector{T}, b::Vector{T}) where T
-    return acos(clamp(dot(a,b)/(norm(a)*norm(b)), -1, 1))
+    return acos(clamp(dot(a,b)/(norm(a)*norm(b)), -1, 1))*sign(b[2])
 end
 
 
