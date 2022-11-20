@@ -104,6 +104,7 @@ function rigid_body_simple(torque_B, force_B, x_W_0, v_B_0, R_W_0, ω_B_0, t_0, 
     # https://cwzx.wordpress.com/2013/12/16/numerical-integration-for-rotational-dynamics/
 
     J_B = vtol_parameters["inertia"]
+    gravity = vtol_parameters["gravity"]
     J_B_inv = vtol_parameters["inertia_inv"]
     mass = vtol_parameters["mass"]
     #CoM = vtol_parameters["CoM"]
@@ -111,8 +112,8 @@ function rigid_body_simple(torque_B, force_B, x_W_0, v_B_0, R_W_0, ω_B_0, t_0, 
     # TODO: linear_damping = vtol_parameters["linear_damping"]
 
     # --------- Translation ------------------------------------
-    gravity = [0.0, 0.0, -9.81]
-    dv_W = (R_W_0 * force_B + (mass .* gravity)) .* (Δt / mass)
+    gravity_W = [0.0, 0.0, -gravity]
+    dv_W = (R_W_0 * force_B + (mass .* gravity_W)) .* (Δt / mass)
     v_W_0 = R_W_0 * v_B_0 # transform Body Velocity in World frame
     v_W_1 = v_W_0 + dv_W # integrate velocity
     
