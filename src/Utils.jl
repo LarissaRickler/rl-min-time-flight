@@ -1,12 +1,33 @@
 module Utils
 using LinearAlgebra;
 
-export calculateAngle
+export calculateAngle, progress
 
 function calculateAngle(a::Vector{T}, b::Vector{T}) where T
     return acos(clamp(dot(a,b)/(norm(a)*norm(b)), -1, 1))*sign(b[1])
 end
 
+
+function progress_along_line(gate::Vector{T}, next_gate::Vector{T}, x_W::Vector{T}) where T
+    t = dot(x_W - gate, next_gate - gate) / norm(next_gate - gate)^2 # debug: problem when to far off ?
+    t = clamp(t, 0, 1)
+    phi = gate + t * (next_gate - gate)
+    return phi
+end
+
+
+function progress(gates::Vector{Vector{T}}, x_W::Vector{T}) where T
+    #Debug: maybe start has to be added to gates ?
+    phis = Vector{Vector{T}}(undef, size(x_W,1)-1)
+    dist = Vector{T}(undef, size(x_W,1) - 1)
+    for i in eachindex(phis)
+        phis[i] = progress_along_line(gates[i], gates[i + 1], x_W)
+        dist[i] = norm(x_W - phis[i])
+    end
+    
+    min_index = argmin(dist)
+    return min_index, phis[min_index]
+end
 
 
 function testRotationMatrix(R)
