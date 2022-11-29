@@ -24,6 +24,6 @@ export eth_vtol_param, brett_vtol3_param, brett_simple_MC #, vtol_body_inertia_B
 
 include("Utils.jl")
 using .Utils;
-export calculateAngle
+export calculateAngle, progress, generate_trajectory, visualize_waypoints
 
 end # end of module
