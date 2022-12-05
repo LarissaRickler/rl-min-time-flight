@@ -1,6 +1,6 @@
 module Visualization
 
-export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators
+export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators, visualize_waypoints
 
 
 using MeshCat
@@ -180,6 +180,20 @@ function create_sphere(name::AbstractString, radius::Real; color::RGBA{Float32}=
         geom = HyperSphere(Point(0.0, 0.0, 0.0),radius);
         setobject!(vis[name], geom, vtol_material);
 end
+
+
+"""
+    visualize_waypoints(waypoints::Vector{Vector{T}}, radius::Real; color=RGBA{Float32}(0.0, 1.0, 0.0, 1.0)) where T
+    
+Creates sphere objects on waypoints of trajectory with the specified radius. Color is optional.
+"""
+function visualize_waypoints(waypoints::Vector{Vector{T}}, radius::Real; color=RGBA{Float32}(0.0, 1.0, 0.0, 1.0)) where T
+    for i in eachindex(waypoints)
+        create_sphere("fixgoal_$i", radius, color=color);
+        set_transform("fixgoal_$i", waypoints[i]); 
+    end
+end
+
 
 """
     close_visualization()
