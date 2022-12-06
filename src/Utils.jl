@@ -37,6 +37,7 @@ end
 function generate_trajectory(num_waypoints::Int) #DEBUG: harder trajectories
     waypoints = Vector{Vector{Float64}}(undef, num_waypoints) 
     waypoints[1] = [0.0, 0.0, 0.0] # zero is first waypoint 
+#     waypoints[2] = [4.0, 0.0, 4.0] # debug
     for i in 2:num_waypoints
         # DEBUG: maybe different ranges
         waypoints[i] = waypoints[i - 1] + rand(Uniform(1.5,7),3)
