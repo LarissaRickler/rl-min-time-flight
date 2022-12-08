@@ -7,11 +7,22 @@ using Distributions;
 
 export calculateAngle, calculate_progress, generate_trajectory
 
+
+"""
+    calculateAngle(a::Vector{T}, b::Vector{T})
+    
+Calculates angle between vector a and vector b.
+"""
 function calculateAngle(a::Vector{T}, b::Vector{T}) where T
     return acos(clamp(dot(a,b)/(norm(a)*norm(b)), -1, 1))*sign(b[1])
 end
 
 
+"""
+    progress_along_line(gate::Vector{T}, next_gate::Vector{T}, x_W::Vector{T})
+    
+Return progress vector phi of vector x_W along a line between gate and next_gate.
+"""
 function progress_along_line(gate::Vector{T}, next_gate::Vector{T}, x_W::Vector{T}) where T
     t = dot(x_W - gate, next_gate - gate) / norm(next_gate - gate)^2 
     t = clamp(t, 0, 1)
@@ -20,6 +31,11 @@ function progress_along_line(gate::Vector{T}, next_gate::Vector{T}, x_W::Vector{
 end
 
 
+"""
+    calculate_progress(gates::Vector{Vector{T}}, x_W::Vector{T})
+    
+Return line segment and progress vector of vector x_W along the trajectory gates.
+"""
 function calculate_progress(gates::Vector{Vector{T}}, x_W::Vector{T}) where T
     #Debug: maybe start has to be added to gates ?
     phis = Vector{Vector{T}}(undef, size(gates,1)-1)
@@ -34,6 +50,11 @@ function calculate_progress(gates::Vector{Vector{T}}, x_W::Vector{T}) where T
 end
 
 
+"""
+    generate_trajectory(num_waypoints::Int)
+    
+Generates trajectory with num_waypoints waypoints (including starting point at [0.0, 0.0, 0.0]).
+"""
 function generate_trajectory(num_waypoints::Int) #DEBUG: harder trajectories
     waypoints = Vector{Vector{Float64}}(undef, num_waypoints) 
     waypoints[1] = [0.0, 0.0, 0.0] # zero is first waypoint 
