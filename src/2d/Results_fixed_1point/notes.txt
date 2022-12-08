@@ -10,4 +10,4 @@ end
 
 see plot in notebook
 
-reduced reward fun
+reduced reward fun (no overall progress)

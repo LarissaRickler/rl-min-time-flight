@@ -14,7 +14,7 @@ end
 see plot in notebook
 
 
-reduced reward fun
+reduced reward fun (no overall progress)
 
 loaded pretrained (1 random point) model 
 
