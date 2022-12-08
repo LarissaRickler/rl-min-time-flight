@@ -61,7 +61,7 @@ function generate_trajectory(num_waypoints::Int) #DEBUG: harder trajectories
 #     waypoints[2] = [4.0, 0.0, 4.0] # debug
     for i in 2:num_waypoints
         # DEBUG: maybe different ranges
-        waypoints[i] = waypoints[i - 1] + rand(Uniform(1.5,7),3)
+        waypoints[i] = waypoints[i - 1] + [rand(Uniform(-7,7)), 0.0, rand(Uniform(1.5,7))]
         waypoints[i][2] = 0.0 # TODO: remove for 3d
     end
     return waypoints
