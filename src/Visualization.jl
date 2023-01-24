@@ -1,6 +1,6 @@
 module Visualization
 
-export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators, visualize_waypoints
+export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators, visualize_waypoints, create_Crazyflie, set_Crazyflie_actuators
 
 
 using MeshCat
@@ -90,6 +90,31 @@ function set_actuators(name::AbstractString, actuators::AbstractVector{T}) where
     settransform!(vis[name]["elevon_large_right"], Translation(x) ∘ LinearMap(R));
 end
 
+
+"""
+    set_Crazyflie_actuators(name::AbstractString, actuators::AbstractVector{T})
+    
+Actuator visualisation 4x thrust
+"""
+function set_Crazyflie_actuators(name::AbstractString, actuators::AbstractVector{T}) where T
+
+    f_1 = actuators[1]
+    f_2 = actuators[2]
+    f_3 = actuators[3]
+    f_4 = actuators[4]
+    
+
+    base = [0.05; -0.05; 0.02];
+    transform_arrow(name*"/thrust_1", base, [0.0; 0.0; f_1])
+    base = [-0.05; -0.05; 0.02];
+    transform_arrow(name*"/thrust_2", base, [0.0; 0.0; f_2])
+    base = [-0.05; 0.05; 0.02];
+    transform_arrow(name*"/thrust_3", base, [0.0; 0.0; f_3])
+    base = [0.05; 0.05; 0.02];
+    transform_arrow(name*"/thrust_4", base, [0.0; 0.0; f_4])
+end
+
+
 """
     create_VTOL(name::AbstractString; actuators::Bool=false, color::RGBA{Float32}=RGBA{Float32}(0.8, 0.8, 0.8, 1.0))
     
@@ -115,6 +140,28 @@ end
 
 
 """
+    create_Crazyflie(name::AbstractString; actuators::Bool=false, color_vec::AbstractVector=[0.8; 0.8; 0.8; 1.0])
+    
+Creates a Crazyflie object with the specified name. Model and color are optional. In addition, visualisations for the actuator values ( 4x motors) can be activated.
+"""
+function create_Crazyflie(name::AbstractString; actuators::Bool=false, color_vec::AbstractVector=[0.8; 0.8; 0.8; 1.0])
+    # https://threejs.org/docs/index.html?q=mesh#api/en/materials/MeshPhongMaterial
+    color::RGBA{Float32}=RGBA{Float32}(color_vec[1], color_vec[2], color_vec[3], color_vec[4])
+    vtol_material = MeshPhongMaterial(color=color);
+
+    path = joinpath(@__DIR__, "..", "visualization", "models", "crazyflie.dae");
+    setobject!(vis[name]["fuselage"], MeshFileGeometry(path), vtol_material);
+
+    if actuators
+        set_arrow(name*"/thrust_1"; radius=0.3)
+        set_arrow(name*"/thrust_2"; radius=0.3)
+        set_arrow(name*"/thrust_3"; radius=0.3)
+        set_arrow(name*"/thrust_4"; radius=0.3)
+    end
+end
+
+
+"""
     set_arrow(name::AbstractString; color::RGBA{Float32}=RGBA{Float32}(0.8, 0.0, 0.0, 0.2))
     
 Initialises arrow with name and RGBA colour
@@ -126,6 +173,25 @@ function set_arrow(name::AbstractString; color::RGBA{Float32}=RGBA{Float32}(0.8,
     setobject!(vis[name]["shaft"], shaft, arrow_material)
 
     head = Cone(Point(0.0, 0.0, 0.0), Point(0.0, 0.0, 1.), 1.0)
+    setobject!(vis[name]["head"], head, arrow_material) 
+end
+
+
+"""
+    set_arrow(name::AbstractString; color_vec::AbstractVector=[0.8; 0.0; 0.8; 0.2], radius=1.0)
+    
+Initialises arrow with name and RGBA colour
+"""
+function set_arrow(name::AbstractString; color_vec::AbstractVector=[0.8; 0.0; 0.8; 0.2], radius=1.0)
+
+    color::RGBA{Float32}=RGBA{Float32}(color_vec[1], color_vec[2], color_vec[3], color_vec[4])
+
+    arrow_material = MeshPhongMaterial(color=color);
+
+    shaft = Cylinder(zero(Point{3, Float64}), Point(0.0, 0.0, 1.0), radius)
+    setobject!(vis[name]["shaft"], shaft, arrow_material)
+
+    head = Cone(Point(0.0, 0.0, 0.0), Point(0.0, 0.0, 1.), radius)
     setobject!(vis[name]["head"], head, arrow_material) 
 end
 

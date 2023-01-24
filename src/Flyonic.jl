@@ -2,6 +2,11 @@ module Flyonic
 
 
 
+# CrazyflieController.jl
+include("CrazyflieController.jl");
+using .CrazyflieController
+export init_crazyflie_controller
+
 # RigidBodies.jl
 include("RigidBodies.jl");
 using .RigidBodies;
@@ -10,17 +15,17 @@ export vtol_add_wind, init_RigidBody, set_next_torque_force!, rigid_body_simulat
 # Visualization.jl
 include("Visualization.jl");
 using .Visualization;
-export transform_Vtol, init_visualization, close_visualization, set_Arrow, transform_Vtol2
+export transform_Vtol, init_visualization, close_visualization, set_Arrow, transform_Vtol2, set_Crazyflie_actuators, set_color, create_Crazyflie
 export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators, visualize_waypoints
 
 # VtolModel.jl
 include("VtolModel.jl");
 using .VtolModel;
-export vtol_model, init_eth_vtol_model, MC_model, init_MC_vtol_model
+export vtol_model, init_eth_vtol_model, MC_model, init_MC_vtol_model, crazyflie_model
 
 # VtolsConfig.jl
 include("VtolsConfig.jl");
-export eth_vtol_param, brett_vtol3_param, brett_simple_MC #, vtol_body_inertia_B, vtol_body_mass, brett_vtol3_parameters
+export eth_vtol_param, brett_vtol3_param, brett_simple_MC, crazyflie_param #, vtol_body_inertia_B, vtol_body_mass, brett_vtol3_parameters
 
 include("Utils.jl")
 using .Utils;
