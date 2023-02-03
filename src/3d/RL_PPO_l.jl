@@ -12,7 +12,6 @@ using IntervalSets;
 using LinearAlgebra;
 using Distributions;
 
-using Plots;
 using Statistics;
 
 using TensorBoardLogger
@@ -24,10 +23,9 @@ R_TOL = 0.5
 N_WAYPOINTS = 4
 SLOW_MODE = true
 
-create_visualization();
 
 # TensorBoard
-logger = TBLogger("tensorboard_PPO", tb_increment)
+# logger = TBLogger("tensorboard_PPO", tb_increment)
 
 # indicates how many threads Julia was started with. This is important for the multi-threaded environment
 Threads.nthreads()
@@ -138,17 +136,17 @@ function VtolEnv(;
     end
     ######
     
-    if visualization
-        create_Crazyflie(name, actuators = true);
-        visualize_waypoints(waypoints[1:num_waypoints], 0.05)
+#     if visualization
+#         create_Crazyflie(name, actuators = true);
+#         visualize_waypoints(waypoints[1:num_waypoints], 0.05)
 
-        set_Crazyflie_actuators(name, [0.0; 0.0; 0.0; 0.0]);
-        set_transform(name, [0.0; 0.0; 0.0] ,one(QuatRotation));
-        set_arrow(string(name, "vel"), color_vec=[0.0; 1.0; 0.0; 1.0]);
-        transform_arrow(string(name, "vel"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.05)
-#         set_arrow(string(name, "_vel_current"), color_vec=[1.0; 0.0; 0.0; 1.0]);
-#         transform_arrow(string(name, "_vel_current"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.02)                  
-    end
+#         set_Crazyflie_actuators(name, [0.0; 0.0; 0.0; 0.0]);
+#         set_transform(name, [0.0; 0.0; 0.0] ,one(QuatRotation));
+#         set_arrow(string(name, "vel"), color_vec=[0.0; 1.0; 0.0; 1.0]);
+#         transform_arrow(string(name, "vel"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.05)
+# #         set_arrow(string(name, "_vel_current"), color_vec=[1.0; 0.0; 0.0; 1.0]);
+# #         transform_arrow(string(name, "_vel_current"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.02)                  
+#     end
     
 
 
@@ -304,9 +302,9 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
     env.reached_goal_in_step = false;
     #env.r_tol = 0.3;
     
-    if env.visualization
-        visualize_waypoints(env.waypoints[1:env.num_waypoints], 0.05); 
-    end
+    # if env.visualization
+    #     visualize_waypoints(env.waypoints[1:env.num_waypoints], 0.05); 
+    # end
     
     norm_way = 0.0 
     for i in 1:(env.num_waypoints - 1)
@@ -352,13 +350,13 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
 
     env.projected_position = [0; 0; 0]
     
-    if env.visualization
-        # Visualize initial state
-        set_transform(env.name, env.x_W,QuatRotation(env.R_W));
-        set_Crazyflie_actuators(env.name, [0.0; 0.0; 0.0; 0.0]);
-        #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05) 
-        transform_arrow(string(env.name, "vel"), env.x_W, [0.0; 0.0; 0.0], max_head_radius=0.05) 
-    end
+    # if env.visualization
+    #     # Visualize initial state
+    #     set_transform(env.name, env.x_W,QuatRotation(env.R_W));
+    #     set_Crazyflie_actuators(env.name, [0.0; 0.0; 0.0; 0.0]);
+    #     #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05) 
+    #     transform_arrow(string(env.name, "vel"), env.x_W, [0.0; 0.0; 0.0], max_head_radius=0.05) 
+    # end
     
     nothing # return nothing
 end;
@@ -425,27 +423,27 @@ function _step!(env::VtolEnv, next_action)
     env.progress = current_progress
     
 
-    if env.realtime
-        sleep(env.Δt) # TODO: just a dirty hack. this is of course slower than real time.
-    end
+    # if env.realtime
+    #     sleep(env.Δt) # TODO: just a dirty hack. this is of course slower than real time.
+    # end
 
     env.t += env.Δt
 
 
-    if env.visualization
-        set_transform(env.name, env.x_W,QuatRotation(env.R_W));
-        set_Crazyflie_actuators(env.name, next_action[1:4])
-        #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05)               
-        transform_arrow(string(env.name, "vel"), env.x_W, env.R_W*env.v_B, max_head_radius=0.05) 
+    # if env.visualization
+    #     set_transform(env.name, env.x_W,QuatRotation(env.R_W));
+    #     set_Crazyflie_actuators(env.name, next_action[1:4])
+    #     #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05)               
+    #     transform_arrow(string(env.name, "vel"), env.x_W, env.R_W*env.v_B, max_head_radius=0.05) 
     
-        for i in eachindex(env.reached_goal)
-            if env.reached_goal[i]
-                create_sphere("fixgoal_$i", 0.05, color=RGBA{Float32}(1.0, 0.0, 0.0, 1.0));
-                set_transform("fixgoal_$i", env.waypoints[i]);
-            end
-        end
+    #     for i in eachindex(env.reached_goal)
+    #         if env.reached_goal[i]
+    #             create_sphere("fixgoal_$i", 0.05, color=RGBA{Float32}(1.0, 0.0, 0.0, 1.0));
+    #             set_transform("fixgoal_$i", env.waypoints[i]);
+    #         end
+    #     end
 
-    end
+    # end
     
     
     #v_B_target = transpose(env.R_W)*env.v_W_target
@@ -577,7 +575,7 @@ if !SLOW_MODE
     agent.policy.approximator = loadModel(); 
 end;
 
-agent.policy.approximator = loadModel(); 
+# agent.policy.approximator = loadModel(); 
 function validate_policy_vis(t, agent, env)
     run(agent.policy, test_env, StopAfterEpisode(1), episode_test_reward_hook)
     # the result of the hook
@@ -604,9 +602,9 @@ function validate_policy(t, agent, env)
     
     println("step: ", t, " reward : ",reward, " length: ", length)
 
-    with_logger(logger) do
-        @info "evaluating" avg_length = length  avg_reward = reward  log_step_increment = 0
-    end
+    # with_logger(logger) do
+    #     @info "evaluating" avg_length = length  avg_reward = reward  log_step_increment = 0
+    # end
     end;
 
 episode_test_reward_hook = TotalRewardPerEpisode( is_display_on_exit=false)
@@ -630,16 +628,16 @@ hook = ComposedHook(
         end
     end,
     =#
-    DoEveryNStep() do t, agent, env
-        with_logger(logger) do
-            rewards = [
-                total_batch_reward_per_episode.rewards[i][end] for i in 1:length(env)  if is_terminated(env[i])
-                    ]
-            if length(rewards) > 0
-                @info "training" reward = mean(rewards)
-            end
-        end
-    end,
+    # DoEveryNStep() do t, agent, env
+    #     with_logger(logger) do
+    #         rewards = [
+    #             total_batch_reward_per_episode.rewards[i][end] for i in 1:length(env)  if is_terminated(env[i])
+    #                 ]
+    #         if length(rewards) > 0
+    #             @info "training" reward = mean(rewards)
+    #         end
+    #     end
+    # end,
     #=
     DoEveryNStep() do t, agent, env
         with_logger(logger) do
@@ -671,10 +669,10 @@ ReinforcementLearning.run(
     )
 #todo as in 2d if training
 
-plot(episode_test_reward_hook.rewards)
-#todo as in 2d if training
+# plot(episode_test_reward_hook.rewards)
+# #todo as in 2d if training
 
-plot(episode_test_step_hook.steps[1:2:end])
+# plot(episode_test_step_hook.steps[1:2:end])
 
 # Question: realtime is super fast , thrust wird sehr groß visuell
 # todo dont visualize dummy points
@@ -792,41 +790,41 @@ else
     fig_path = fig_path * "fast/"
 end
 
-plot(iterations, rewards, xlabel="Iterations", ylabel="Reward", legend = false, xformatter = :scientific)
+# plot(iterations, rewards, xlabel="Iterations", ylabel="Reward", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "reward.svg")
+# savefig(fig_path * "reward.svg")
 
-plot(iterations, success_rate, xlabel="Iterations", ylabel="Success Rate", legend = false, xformatter = :scientific)
+# plot(iterations, success_rate, xlabel="Iterations", ylabel="Success Rate", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "success_rate.svg")
+# savefig(fig_path * "success_rate.svg")
 
-plot(iterations, avg_velocity, xlabel="Iterations", ylabel="Average Velocity", legend = false, xformatter = :scientific)
+# plot(iterations, avg_velocity, xlabel="Iterations", ylabel="Average Velocity", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "avg_velocity.svg")
+# savefig(fig_path * "avg_velocity.svg")
 
-plot(iterations, avg_compl_time, xlabel="Iterations", ylabel="Average Completion Time", legend = false, xformatter = :scientific)
+# plot(iterations, avg_compl_time, xlabel="Iterations", ylabel="Average Completion Time", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "avg_comp_time.svg")
+# savefig(fig_path * "avg_comp_time.svg")
 
-create_visualization();
+# create_visualization();
 
-vid_env = VtolEnv(;name = "testVTOL", visualization = true, realtime = true);
+# vid_env = VtolEnv(;name = "testVTOL", visualization = true, realtime = true);
 
-SLOW_MODE = true
+# SLOW_MODE = true
 
-if SLOW_MODE
-    path = "./RL_models_slow/"
-    load_model = 500_000
-    println("slow mode")
-else
-    path = "./RL_models_fast/"
-    load_model = 1_250_000
-    println("fast mode")
-end
-agent.policy.approximator = loadModel(path,load_model); 
-RLBase.reset!(vid_env)
-run(agent.policy, vid_env, StopAfterEpisode(10))
+# if SLOW_MODE
+#     path = "./RL_models_slow/"
+#     load_model = 500_000
+#     println("slow mode")
+# else
+#     path = "./RL_models_fast/"
+#     load_model = 1_250_000
+#     println("fast mode")
+# end
+# agent.policy.approximator = loadModel(path,load_model); 
+# RLBase.reset!(vid_env)
+# run(agent.policy, vid_env, StopAfterEpisode(10))
 
-close_visualization();
+# close_visualization();
 
 
