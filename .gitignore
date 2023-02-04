@@ -3,3 +3,14 @@
 *.DS_Store
 .ipynb_checkpoints
 *checkpoint.ipynb
+
+
+RL_models_fast
+RL_models_slow
+plots
+
+tensorboard_*
+
+
+Manifest.toml
+Project.toml
