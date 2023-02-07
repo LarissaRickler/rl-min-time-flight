@@ -8,6 +8,7 @@
 RL_models_fast
 RL_models_slow
 plots
+videos
 
 tensorboard_*
 
