@@ -591,7 +591,7 @@ end;
 
 
 function loadModel()
-    f = joinpath(".src/3d/load_model/", "cf_ppo_$(load_from_slow_step).bson")
+    f = joinpath("./src/3d/load_model/", "cf_ppo_$(load_from_slow_step).bson")
     @load f model
     return model
 end;
