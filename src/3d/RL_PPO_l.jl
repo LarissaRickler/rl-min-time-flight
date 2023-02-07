@@ -37,11 +37,7 @@ create_remote_visualization();
 
 # TensorBoard
 logger = TBLogger("tensorboard_PPO", tb_increment)
-macro sh_str(s) open(`sh`,"w",stdout) do io; print(io, s); end; end
 
-sh"""
-tensorboard --logdir /home/larissa/Documents/Projects/ADLR/ADLR_project/src/3d/tensorboard_PPO
-"""
 # indicates how many threads Julia was started with. This is important for the multi-threaded environment
 Threads.nthreads()
 
