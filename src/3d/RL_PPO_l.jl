@@ -1,3 +1,8 @@
+using Pkg
+if isfile("Project.toml") && isfile("Manifest.toml")
+    Pkg.activate(".")
+end
+
 include("../Flyonic.jl");
 using .Flyonic;
 
@@ -12,21 +17,33 @@ using IntervalSets;
 using LinearAlgebra;
 using Distributions;
 
+using Plots;
 using Statistics;
 
 using TensorBoardLogger
 using Logging
 
+
+using JLD;
 using BSON: @save, @load # save mode
 
-R_TOL = 0.5
-N_WAYPOINTS = 4
-SLOW_MODE = true
+# TODO: set as desired
+R_TOL = 0.5;
+N_WAYPOINTS = 2; # including startpoint, >= 2
+SLOW_MODE = true;
+TRAINING = true;
+EVALUATION = true;
+TRAJECTORY = generate_trajectory(N_WAYPOINTS + 1)
 
+create_remote_visualization();
 
 # TensorBoard
-# logger = TBLogger("tensorboard_PPO", tb_increment)
+logger = TBLogger("tensorboard_PPO", tb_increment)
+macro sh_str(s) open(`sh`,"w",stdout) do io; print(io, s); end; end
 
+sh"""
+tensorboard --logdir /home/larissa/Documents/Projects/ADLR/ADLR_project/src/3d/tensorboard_PPO
+"""
 # indicates how many threads Julia was started with. This is important for the multi-threaded environment
 Threads.nthreads()
 
@@ -96,31 +113,35 @@ function VtolEnv(;
 
     
     state_space = Space( # Three continuous values in state space.
-        ClosedInterval{T}[
-            typemin(T)..typemax(T), # 1  World Vector UP x
-            typemin(T)..typemax(T), # 2  World Vector UP y
-            typemin(T)..typemax(T), # 3  World Vector UP z
+        ClosedInterval{T}[#todo
+            typemin(T)..typemax(T), # 1 x
+            typemin(T)..typemax(T), # 2 y
+            typemin(T)..typemax(T), # 3 z
 
-            typemin(T)..typemax(T), # 4  World Vector FRONT x
-            typemin(T)..typemax(T), # 5  World Vector FRONT y
-            typemin(T)..typemax(T), # 6  World Vector FRONT z
+            typemin(T)..typemax(T), # 4  World Vector UP x
+            typemin(T)..typemax(T), # 5  World Vector UP y
+            typemin(T)..typemax(T), # 6  World Vector UP z
+
+            typemin(T)..typemax(T), # 7  World Vector FRONT x
+            typemin(T)..typemax(T), # 8  World Vector FRONT y
+            typemin(T)..typemax(T), # 9  World Vector FRONT z
             
-            typemin(T)..typemax(T), # 7 Body velocity along x
-            typemin(T)..typemax(T), # 8 Body velocity along y
-            typemin(T)..typemax(T), # 9 Body velocity along z
+            typemin(T)..typemax(T), # 10 Body velocity along x
+            typemin(T)..typemax(T), # 11 Body velocity along y
+            typemin(T)..typemax(T), # 12 Body velocity along z
             
-            typemin(T)..typemax(T), # 10 Body rotational velocity around x
-            typemin(T)..typemax(T), # 11 Body rotational velocity around y
-            typemin(T)..typemax(T), # 12 Body rotational velocity around z
+            typemin(T)..typemax(T), # 13 Body rotational velocity around x
+            typemin(T)..typemax(T), # 14 Body rotational velocity around y
+            typemin(T)..typemax(T), # 15 Body rotational velocity around z
             
             ###NEW###
-            typemin(T)..typemax(T), # 13 position error along x (next gate - current position)
-            typemin(T)..typemax(T), # 14 position error along y (next gate - current position)
-            typemin(T)..typemax(T), # 15 position error along z (next gate - current position)
+            typemin(T)..typemax(T), # 16 position error along x (next gate - current position)
+            typemin(T)..typemax(T), # 17 position error along y (next gate - current position)
+            typemin(T)..typemax(T), # 18 position error along z (next gate - current position)
             
-            typemin(T)..typemax(T), # 16 way to next next gate x (next next gate - next gate)
-            typemin(T)..typemax(T), # 17 way to next next gate y (next next gate - next gate)
-            typemin(T)..typemax(T), # 18 way to next next gate z (next next gate - next gate)
+            typemin(T)..typemax(T), # 19 way to next next gate x (next next gate - next gate)
+            typemin(T)..typemax(T), # 20 way to next next gate y (next next gate - next gate)
+            typemin(T)..typemax(T), # 21 way to next next gate z (next next gate - next gate)
             ######
             ], 
     )
@@ -136,17 +157,17 @@ function VtolEnv(;
     end
     ######
     
-#     if visualization
-#         create_Crazyflie(name, actuators = true);
-#         visualize_waypoints(waypoints[1:num_waypoints], 0.05)
+    if visualization
+        create_Crazyflie(name, actuators = true);
+        visualize_waypoints(waypoints[1:num_waypoints], 0.05)
 
-#         set_Crazyflie_actuators(name, [0.0; 0.0; 0.0; 0.0]);
-#         set_transform(name, [0.0; 0.0; 0.0] ,one(QuatRotation));
-#         set_arrow(string(name, "vel"), color_vec=[0.0; 1.0; 0.0; 1.0]);
-#         transform_arrow(string(name, "vel"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.05)
-# #         set_arrow(string(name, "_vel_current"), color_vec=[1.0; 0.0; 0.0; 1.0]);
-# #         transform_arrow(string(name, "_vel_current"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.02)                  
-#     end
+        set_Crazyflie_actuators(name, [0.0; 0.0; 0.0; 0.0]);
+        set_transform(name, [0.0; 0.0; 0.0] ,one(QuatRotation));
+        set_arrow(string(name, "vel"), color_vec=[0.0; 1.0; 0.0; 1.0]);
+        transform_arrow(string(name, "vel"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.05)
+#         set_arrow(string(name, "_vel_current"), color_vec=[1.0; 0.0; 0.0; 1.0]);
+#         transform_arrow(string(name, "_vel_current"), [0.0; 0.0; 0.0], [0.0; 0.0; 1.0], max_head_radius=0.02)                  
+    end
     
 
 
@@ -154,7 +175,7 @@ function VtolEnv(;
         action_space,
         state_space,
         zeros(T, length(state_space)), # current state, needs to be extended.
-        [0.25; 0.25; 0.25; 0.25],#rand(action_space),
+        [0.25; 0.25; 0.25; 0.25],#rand(action_space), #todo test with random
         false, # episode done ?
         0.0, # time
         rng, # random number generator  
@@ -267,7 +288,7 @@ function computeReward(env::VtolEnv{A,T}) where {A,T}
     #norm_ω = norm(env.ω_B[3]) # penalty for body rate
     norm_ω = norm(env.ω_B) # penalty for body rate
 
-    if env.x_W[3] < -2
+    if env.x_W[3] < 0
         fall = 1
     else
         fall = 0
@@ -277,7 +298,7 @@ function computeReward(env::VtolEnv{A,T}) where {A,T}
         k_s /= env.norm_way
         k_p /= env.norm_way
     end
-
+    
     return k_p * r_p + k_s * r_s + k_wp * r_wp - k_ω * norm_ω - fall
     
 end
@@ -302,9 +323,9 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
     env.reached_goal_in_step = false;
     #env.r_tol = 0.3;
     
-    # if env.visualization
-    #     visualize_waypoints(env.waypoints[1:env.num_waypoints], 0.05); 
-    # end
+    if env.visualization
+        visualize_waypoints(env.waypoints[1:env.num_waypoints], 0.05); 
+    end
     
     norm_way = 0.0 
     for i in 1:(env.num_waypoints - 1)
@@ -315,34 +336,42 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
     env.progress = 0.0;
     env.progress_prev = 0.0;
         
- 
-    env.state = [env.R_W[1,3]; # 1  World Vector UP x
-                 env.R_W[2,3]; # 2  World Vector UP y
-                 env.R_W[3,3]; # 3  World Vector UP z
+ #todo
+    env.state = [env.x_W[1]; # 1 position along x
+                 env.x_W[2]; # 2 position along y
+                 env.x_W[3]; # 3 position along z
+#todo right R_W?
+                 env.R_W[1,1];
+                 env.R_W[2,1];
+                 env.R_W[3,1];
+        
+                 env.R_W[1,3]; # 4  World Vector UP x
+                 env.R_W[2,3]; # 5  World Vector UP y
+                 env.R_W[3,3]; # 6  World Vector UP z
 
-                 env.R_W[1,1]; # 4  World Vector FRONT x
-                 env.R_W[2,1]; # 5  World Vector FRONT y
-                 env.R_W[3,1]; # 6  World Vector FRONT z
+#                  env.R_W[1,1]; # 7  World Vector FRONT x
+#                  env.R_W[2,1]; # 8  World Vector FRONT y
+#                  env.R_W[3,1]; # 9  World Vector FRONT z
 
-                 env.v_B[1]; #  7  Body velocity along x
-                 env.v_B[2]; #  8  Body velocity along y
-                 env.v_B[3]; #  9  Body velocity along z
+                 env.v_B[1]; #  10 Body velocity along x
+                 env.v_B[2]; #  11 Body velocity along y
+                 env.v_B[3]; #  12 Body velocity along z
 
-                 env.ω_B[1]; #  10  Body rotational velocity around x
-                 env.ω_B[2]; #  11  Body rotational velocity around y
-                 env.ω_B[3]; #  12  Body rotational velocity around z
+                 env.ω_B[1]; #  13  Body rotational velocity around x
+                 env.ω_B[2]; #  14  Body rotational velocity around y
+                 env.ω_B[3]; #  15  Body rotational velocity around z
 
-                 env.waypoints[2][1] - env.x_W[1]; # 13 position error to next gate along x
-                 env.waypoints[2][2] - env.x_W[2]; # 14 position error to next gate along z
-                 env.waypoints[2][3] - env.x_W[3]; # 15 position error to next gate along z
+                 env.waypoints[2][1] - env.x_W[1]; # 16 position error to next gate along x
+                 env.waypoints[2][2] - env.x_W[2]; # 17 position error to next gate along z
+                 env.waypoints[2][3] - env.x_W[3]; # 18 position error to next gate along z
                  
-                 env.waypoints[3][1] - env.waypoints[2][1]; # 16 way to next next gate x
-                 env.waypoints[3][2] - env.waypoints[2][2]; # 17 way to next next gate z  
-                 env.waypoints[3][3] - env.waypoints[2][3]] # 18 way to next next gate z 
+                 env.waypoints[3][1] - env.waypoints[2][1]; # 19 way to next next gate x 
+                 env.waypoints[3][2] - env.waypoints[2][2]; # 20 way to next next gate y
+                 env.waypoints[3][3] - env.waypoints[2][3]]  # 21 way to next next gate z 
     
-    
+
     env.t = 0.0; # time 0s
-    env.action = [0.25; 0.25; 0.25; 0.25] # normalized
+    env.action = [0.25; 0.25; 0.25; 0.25] # normalized # todo try with 0.0
     #env.last_action = [0.255; 0.255; 0.255; 0.255] # normalized
     #env.current_action = [0.255; 0.255; 0.255; 0.255] # normalized
 
@@ -350,13 +379,13 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
 
     env.projected_position = [0; 0; 0]
     
-    # if env.visualization
-    #     # Visualize initial state
-    #     set_transform(env.name, env.x_W,QuatRotation(env.R_W));
-    #     set_Crazyflie_actuators(env.name, [0.0; 0.0; 0.0; 0.0]);
-    #     #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05) 
-    #     transform_arrow(string(env.name, "vel"), env.x_W, [0.0; 0.0; 0.0], max_head_radius=0.05) 
-    # end
+    if env.visualization
+        # Visualize initial state
+        set_transform(env.name, env.x_W,QuatRotation(env.R_W));
+        set_Crazyflie_actuators(env.name, [0.0; 0.0; 0.0; 0.0]);
+        #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05) 
+        transform_arrow(string(env.name, "vel"), env.x_W, [0.0; 0.0; 0.0], max_head_radius=0.05) 
+    end
     
     nothing # return nothing
 end;
@@ -423,57 +452,62 @@ function _step!(env::VtolEnv, next_action)
     env.progress = current_progress
     
 
-    # if env.realtime
-    #     sleep(env.Δt) # TODO: just a dirty hack. this is of course slower than real time.
-    # end
+    if env.realtime
+        sleep(env.Δt) # TODO: just a dirty hack. this is of course slower than real time.
+    end
 
     env.t += env.Δt
 
 
-    # if env.visualization
-    #     set_transform(env.name, env.x_W,QuatRotation(env.R_W));
-    #     set_Crazyflie_actuators(env.name, next_action[1:4])
-    #     #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05)               
-    #     transform_arrow(string(env.name, "vel"), env.x_W, env.R_W*env.v_B, max_head_radius=0.05) 
+    if env.visualization
+        set_transform(env.name, env.x_W,QuatRotation(env.R_W));
+        set_Crazyflie_actuators(env.name, next_action[1:4])
+        #transform_arrow(string(env.name, "_vel"), env.x_W, env.v_W_target, max_head_radius=0.05)               
+        transform_arrow(string(env.name, "vel"), env.x_W, env.R_W*env.v_B, max_head_radius=0.05) 
     
-    #     for i in eachindex(env.reached_goal)
-    #         if env.reached_goal[i]
-    #             create_sphere("fixgoal_$i", 0.05, color=RGBA{Float32}(1.0, 0.0, 0.0, 1.0));
-    #             set_transform("fixgoal_$i", env.waypoints[i]);
-    #         end
-    #     end
+        for i in eachindex(env.reached_goal)
+            if env.reached_goal[i]
+                create_sphere("fixgoal_$i", 0.05, color=RGBA{Float32}(1.0, 0.0, 0.0, 1.0));
+                set_transform("fixgoal_$i", env.waypoints[i]);
+            end
+        end
 
-    # end
+    end
     
     
     #v_B_target = transpose(env.R_W)*env.v_W_target
     
     
     # State space
-    env.state[1] = env.R_W[1,3] # 1  World Vector UP x
-    env.state[2] = env.R_W[2,3] # 2  World Vector UP y
-    env.state[3] = env.R_W[3,3] # 3  World Vector UP z
+    #todo
+    env.state[1] = env.x_W[1];
+    env.state[2] = env.x_W[2];
+    env.state[3] = env.x_W[3];
+    
+    env.state[4] = env.R_W[1,1] # 1  World Vector UP x
+    env.state[5] = env.R_W[2,1] # 2  World Vector UP y
+    env.state[6] = env.R_W[3,1] # 3  World Vector UP z
 
-    env.state[4] = env.R_W[1,1] # 4  World Vector FRONT x
-    env.state[5] = env.R_W[2,1] # 5  World Vector FRONT y
-    env.state[6] = env.R_W[3,1] # 6  World Vector FRONT z
+    env.state[7] = env.R_W[1,3] # 4  World Vector FRONT x
+    env.state[8] = env.R_W[2,3] # 5  World Vector FRONT y
+    env.state[9] = env.R_W[3,3] # 6  World Vector FRONT z
         
-    env.state[7] = env.v_B[1] # 7  Body velocity along x
-    env.state[8] = env.v_B[2] # 8  Body velocity along y
-    env.state[9] = env.v_B[3] # 9  Body velocity along z
+    env.state[10] = env.v_B[1] # 7  Body velocity along x
+    env.state[11] = env.v_B[2] # 8  Body velocity along y
+    env.state[12] = env.v_B[3] # 9  Body velocity along z
 
-    env.state[10] = env.ω_B[1] # 10 Body rotational velocity around x
-    env.state[11] = env.ω_B[2] # 11 Body rotational velocity around y
-    env.state[12] = env.ω_B[3] # 12 Body rotational velocity around z
+    env.state[13] = env.ω_B[1] # 10 Body rotational velocity around x
+    env.state[14] = env.ω_B[2] # 11 Body rotational velocity around y
+    env.state[15] = env.ω_B[3] # 12 Body rotational velocity around z
 
-    env.state[13] = env.waypoints[env.current_point][1] - env.x_W[1] # 13 position error to next gate along x
-    env.state[14] = env.waypoints[env.current_point][2] - env.x_W[2]; # 14 position error to next gate along z
-    env.state[15] = env.waypoints[env.current_point][3] - env.x_W[3]; # 15 position error to next gate along z
-                 
+    env.state[16] = env.waypoints[env.current_point][1] - env.x_W[1] # 13 position error to next gate along x
+    env.state[17] = env.waypoints[env.current_point][2] - env.x_W[2]; # 14 position error to next gate along z
+    env.state[18] = env.waypoints[env.current_point][3] - env.x_W[3]; # 15 position error to next gate along z
+     #todo            
     if env.current_point <= env.num_waypoints
-        env.state[16] = env.waypoints[env.current_point + 1][1] - env.waypoints[env.current_point][1] ; # 16 way to next next gate x (next next gate - next gate), dummy integriert
-        env.state[17] = env.waypoints[env.current_point + 1][2] - env.waypoints[env.current_point][2]; # 17 way to next next gate y (next next gate - next gate), dummy integriert
-        env.state[18] = env.waypoints[env.current_point + 1][3] - env.waypoints[env.current_point][3]; # 18 way to next next gate z (next next gate - next gate), dummy integriert
+        env.state[19] = env.waypoints[env.current_point + 1][1] - env.waypoints[env.current_point][1] ; # 16 way to next next gate x (next next gate - next gate), dummy integriert
+        env.state[20] = env.waypoints[env.current_point + 1][2] - env.waypoints[env.current_point][2]; # 17 way to next next gate y (next next gate - next gate), dummy integriert
+        env.state[21] = env.waypoints[env.current_point + 1][3] - env.waypoints[env.current_point][3]; # 18 way to next next gate z (next next gate - next gate), dummy integriert
     end
 
     
@@ -482,11 +516,11 @@ function _step!(env::VtolEnv, next_action)
     env.done = #true
         # After time... How fast is drone+Range of desired point
         # After reaching position (circle of r_tol)
-        norm(env.ω_B) > 100.0 || 
-        norm(env.v_B) > 100.0 || # stop if body is too fast_point 
-        env.x_W[3] < -5.0 || # stop if body is below -5m
-        #env.t > env.num_waypoints * 3.0 ||# stop after 3s per point
-        norm(env.x_W - env.projected_position) > 2.0 || # too far off the path 
+         norm(env.ω_B) > 100.0 || 
+         norm(env.v_B) > 100.0 || # stop if body is too fast_point 
+        env.x_W[3] < -1.0 || # stop if body is below -5m
+        env.t > env.num_waypoints * 3.0 ||# stop after 3s per point #todo set in fast learning phase
+        norm(env.x_W - env.projected_position) > 5.0 || # too far off the path 
         env.reached_goal == trues(env.num_waypoints)
 
     nothing
@@ -498,9 +532,6 @@ seed = 123
 rng = StableRNG(seed)
 N_ENV = 8
 UPDATE_FREQ = 1024
-EVALUATION_FREQ = 10_000
-SAVE_FREQ = 100_000
-
     
     
     # define multiple environments for parallel training
@@ -516,16 +547,16 @@ SAVE_FREQ = 100_000
     approximator = ActorCritic(
                 actor = GaussianNetwork(
                     pre = Chain(
-                    Dense(ns, 256, relu; initW = glorot_uniform(rng)),
-                    Dense(256, 256, relu; initW = glorot_uniform(rng)),
+                    Dense(ns, 256, tanh; initW = glorot_uniform(rng)),
+                    Dense(256, 256, tanh; initW = glorot_uniform(rng)),
                     ),
                     μ = Chain(Dense(256, na; initW = glorot_uniform(rng))),
                     logσ = Chain(Dense(256, na; initW = glorot_uniform(rng))),
                 ),
                 critic = Chain(
-                    Dense(ns, 256, relu; initW = glorot_uniform(rng)),
-                    Dense(256, 128, relu; initW = glorot_uniform(rng)),
-                    Dense(128, 1; initW = glorot_uniform(rng)),
+                    Dense(ns, 256, tanh; initW = glorot_uniform(rng)),
+                    Dense(256, 256, tanh; initW = glorot_uniform(rng)),
+                    Dense(256, 1; initW = glorot_uniform(rng)),
                 ),
                 optimizer = ADAM(1e-4),
             );
@@ -556,7 +587,7 @@ SAVE_FREQ = 100_000
 function saveModel(t, agent, env)
     model = cpu(agent.policy.approximator)
     if SLOW_MODE
-        f = joinpath("./RL_models_slow/", "cf_ppo_$t.bson")
+        f = joinpath("./RL_models_slow/", "cf_ppo_$(t).bson")
     else
         f = joinpath("./RL_models_fast/", "cf_ppo_$t.bson") 
     end
@@ -566,16 +597,11 @@ end;
 
 
 function loadModel()
-    f = joinpath("./", "RL_models_slow/cf_ppo_5500000.bson")
+    f = joinpath("./load_model/", "cf_ppo_$(load_from_slow_step).bson")
     @load f model
     return model
-end
-
-if !SLOW_MODE
-    agent.policy.approximator = loadModel(); 
 end;
 
-# agent.policy.approximator = loadModel(); 
 function validate_policy_vis(t, agent, env)
     run(agent.policy, test_env, StopAfterEpisode(1), episode_test_reward_hook)
     # the result of the hook
@@ -587,6 +613,7 @@ visualize_validation = true; # TODO set as desired
 episode_test_reward_hook = TotalRewardPerEpisode(;is_display_on_exit=false)
 # create a env only for reward test
 test_env = VtolEnv(;name = "test_cf", visualization = visualize_validation, realtime = visualize_validation);
+
 # todo merge with above
 function validate_policy(t, agent, env)
     # for validation extract the policy from the agend
@@ -602,10 +629,10 @@ function validate_policy(t, agent, env)
     
     println("step: ", t, " reward : ",reward, " length: ", length)
 
-    # with_logger(logger) do
-    #     @info "evaluating" avg_length = length  avg_reward = reward  log_step_increment = 0
-    # end
-    end;
+    with_logger(logger) do
+        @info "evaluating" avg_length = length  avg_reward = reward  log_step_increment = 0
+    end
+end;
 
 episode_test_reward_hook = TotalRewardPerEpisode( is_display_on_exit=false)
 episode_test_step_hook = StepsPerEpisode()
@@ -614,12 +641,27 @@ episode_test_step_hook = StepsPerEpisode()
 test_env = VtolEnv(;name = "test_cf", visualization = true, realtime = true);
 #test_env = VtolEnv(;name = "test_cf", visualization = false, realtime = false);
 
+# number of steps
+steps_slow = 20_000_000
+steps_fast = 20_000_000
+load_from_slow_step = 20_000_000 # TODO: choose slow model
+
+save_freq = 100_000
+validate_freq = 100_000
+
+steps = 0
+if SLOW_MODE
+    steps = steps_slow
+else
+    steps = steps_fast
+end
+
 # Define hook which is called during the training
 total_batch_reward_per_episode = TotalBatchRewardPerEpisode(N_ENV, is_display_on_exit = false)
 hook = ComposedHook(
     total_batch_reward_per_episode,
-    DoEveryNStep(saveModel, n=SAVE_FREQ),
-    DoEveryNStep(validate_policy, n=EVALUATION_FREQ),
+    DoEveryNStep(saveModel, n=save_freq),
+    DoEveryNStep(validate_policy, n=validate_freq),
     #=
     DoEveryNStep() do t, agent, env
         p = agent.policy
@@ -628,16 +670,16 @@ hook = ComposedHook(
         end
     end,
     =#
-    # DoEveryNStep() do t, agent, env
-    #     with_logger(logger) do
-    #         rewards = [
-    #             total_batch_reward_per_episode.rewards[i][end] for i in 1:length(env)  if is_terminated(env[i])
-    #                 ]
-    #         if length(rewards) > 0
-    #             @info "training" reward = mean(rewards)
-    #         end
-    #     end
-    # end,
+    DoEveryNStep() do t, agent, env
+        with_logger(logger) do
+            rewards = [
+                total_batch_reward_per_episode.rewards[i][end] for i in 1:length(env)  if is_terminated(env[i])
+                    ]
+            if length(rewards) > 0
+                @info "training" reward = mean(rewards)
+            end
+        end
+    end,
     #=
     DoEveryNStep() do t, agent, env
         with_logger(logger) do
@@ -647,44 +689,35 @@ hook = ComposedHook(
     =#
 );
 
-# number of steps
-steps_slow = 5_500_000 
-steps_fast = 5_500_000
-load_from_slow_step = 5_000_000 # TODO: choose slow model
+#todo load model
+agent.policy.approximator = loadModel(); 
 
-steps = 0
-if SLOW_MODE
-    steps = steps_slow
-else
-    steps = steps_fast
+if TRAINING
+    ReinforcementLearning.run(
+        agent,
+        env,
+        StopAfterStep(steps),
+        hook
+    )
 end
 
-ReinforcementLearning.run(
-    agent,
-    env,
-    StopAfterStep(steps),
-    ComposedHook(
-        DoEveryNStep(saveModel, n=100_000), 
-        DoEveryNStep(validate_policy, n=10_000)),
-    )
-#todo as in 2d if training
+if TRAINING
+    plot(episode_test_reward_hook.rewards)
+end
 
-# plot(episode_test_reward_hook.rewards)
-# #todo as in 2d if training
+if TRAINING
+    plot(episode_test_step_hook.steps[1:2:end])
+end
 
-# plot(episode_test_step_hook.steps[1:2:end])
+close_visualization(); # closes the MeshCat visualization
 
 # Question: realtime is super fast , thrust wird sehr groß visuell
-# todo dont visualize dummy points
-# todo validate policy 
-#
-
-using JLD;
+# 
 
 test_env = VtolEnv(;name = "test_cf");
 
 function loadModel(path, num)
-    f = joinpath(path, "cf_ppo_$num.bson") # TODO: evtl anpassen
+    f = joinpath(path, "cf_ppo_$num.bson") 
     @load f model
     return model
 end;
@@ -702,13 +735,13 @@ function validate(num_models, num_test)
         n_success = 0;
         
         for exp in 1:num_test
-            RLBase.reset!(test_env)
             if SLOW_MODE
                 path = "./RL_models_slow/"
             else
                 path = "./RL_models_fast/"
             end
-            agent.policy.approximator = loadModel(path, i * 100_000); 
+            agent.policy.approximator = loadModel(path, i * save_freq); 
+            RLBase.reset!(test_env)
             run(agent.policy, test_env, StopAfterEpisode(1), episode_test_reward_hook)
             # the result of the hook
             sum_rewards_model += episode_test_reward_hook.rewards[end];
@@ -741,7 +774,7 @@ end;
 EVALUATION = true
 if EVALUATION
     
-    num_model = Int(steps / 100_000); # todo save size
+    num_model = Int(steps / save_freq); 
     num_test = 200; # TODO: change as desired 
 
     rewards = zeros(num_model, 1);
@@ -758,7 +791,7 @@ if EVALUATION
         results_path = results_path * "fast/"
     end
     
-    save(results_path * "iterations.jld", "data", [1:num_model] * 100000) # todo save size auch in 2d
+    save(results_path * "iterations.jld", "data", [1:num_model] * save_freq) # todo save size auch in 2d
     
     save(results_path * "avg_comp_time.jld", "data", avg_compl_time)
     
@@ -790,41 +823,38 @@ else
     fig_path = fig_path * "fast/"
 end
 
-# plot(iterations, rewards, xlabel="Iterations", ylabel="Reward", legend = false, xformatter = :scientific)
+plot(iterations, rewards, xlabel="Iterations", ylabel="Reward", legend = false, xformatter = :scientific)
 
-# savefig(fig_path * "reward.svg")
+savefig(fig_path * "reward.svg")
 
-# plot(iterations, success_rate, xlabel="Iterations", ylabel="Success Rate", legend = false, xformatter = :scientific)
+plot(iterations, success_rate, xlabel="Iterations", ylabel="Success Rate", legend = false, xformatter = :scientific)
 
-# savefig(fig_path * "success_rate.svg")
+savefig(fig_path * "success_rate.svg")
 
-# plot(iterations, avg_velocity, xlabel="Iterations", ylabel="Average Velocity", legend = false, xformatter = :scientific)
+plot(iterations, avg_velocity, xlabel="Iterations", ylabel="Average Velocity", legend = false, xformatter = :scientific)
 
-# savefig(fig_path * "avg_velocity.svg")
+savefig(fig_path * "avg_velocity.svg")
 
-# plot(iterations, avg_compl_time, xlabel="Iterations", ylabel="Average Completion Time", legend = false, xformatter = :scientific)
+plot(iterations, avg_compl_time, xlabel="Iterations", ylabel="Average Completion Time", legend = false, xformatter = :scientific)
 
-# savefig(fig_path * "avg_comp_time.svg")
+savefig(fig_path * "avg_comp_time.svg")
 
-# create_visualization();
+create_visualization();
 
-# vid_env = VtolEnv(;name = "testVTOL", visualization = true, realtime = true);
+# TODO: load_model as desired
+vid_env = VtolEnv(;name = "testVTOL", visualization = true, realtime = true);
 
-# SLOW_MODE = true
+if SLOW_MODE
+    path = "./RL_models_slow/"
+    load_model = 500_000
+    println("slow mode")
+else
+    path = "./RL_models_fast/"
+    load_model = 1_250_000
+    println("fast mode")
+end
+agent.policy.approximator = loadModel(path,load_model); 
+RLBase.reset!(vid_env)
+run(agent.policy, vid_env, StopAfterEpisode(2))
 
-# if SLOW_MODE
-#     path = "./RL_models_slow/"
-#     load_model = 500_000
-#     println("slow mode")
-# else
-#     path = "./RL_models_fast/"
-#     load_model = 1_250_000
-#     println("fast mode")
-# end
-# agent.policy.approximator = loadModel(path,load_model); 
-# RLBase.reset!(vid_env)
-# run(agent.policy, vid_env, StopAfterEpisode(10))
-
-# close_visualization();
-
-
+close_visualization();
