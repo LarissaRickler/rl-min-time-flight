@@ -162,22 +162,6 @@ end
 
 
 """
-    set_arrow(name::AbstractString; color::RGBA{Float32}=RGBA{Float32}(0.8, 0.0, 0.0, 0.2))
-    
-Initialises arrow with name and RGBA colour
-"""
-function set_arrow(name::AbstractString; color::RGBA{Float32}=RGBA{Float32}(0.8, 0.0, 0.0, 0.2))
-    arrow_material = MeshPhongMaterial(color=color);
-
-    shaft = Cylinder(zero(Point{3, Float64}), Point(0.0, 0.0, 1.0), 1.0)
-    setobject!(vis[name]["shaft"], shaft, arrow_material)
-
-    head = Cone(Point(0.0, 0.0, 0.0), Point(0.0, 0.0, 1.), 1.0)
-    setobject!(vis[name]["head"], head, arrow_material) 
-end
-
-
-"""
     set_arrow(name::AbstractString; color_vec::AbstractVector=[0.8; 0.0; 0.8; 0.2], radius=1.0)
     
 Initialises arrow with name and RGBA colour
