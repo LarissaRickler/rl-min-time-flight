@@ -24,7 +24,6 @@ using TensorBoardLogger
 using Logging
 
 
-using JLD;
 using BSON: @save, @load # save mode
 
 # TODO: set as desired
@@ -32,8 +31,7 @@ R_TOL = 0.5;
 N_WAYPOINTS = 2; # including startpoint, >= 2
 SLOW_MODE = true;
 TRAINING = true;
-EVALUATION = true;
-TRAJECTORY = generate_trajectory(N_WAYPOINTS + 1)
+EVALUATION = false;
 
 create_remote_visualization();
 
