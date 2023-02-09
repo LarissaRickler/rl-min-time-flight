@@ -6,11 +6,7 @@
 
 
 RL_models_*
-plots
+plots*
 videos
 
 tensorboard_*
-
-
-Manifest.toml
-Project.toml
