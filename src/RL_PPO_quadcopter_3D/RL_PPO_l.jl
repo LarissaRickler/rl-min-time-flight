@@ -26,6 +26,7 @@ using Logging
 
 using BSON: @save, @load # save mode
 
+
 # TODO: set as desired
 R_TOL = 0.5;
 N_WAYPOINTS = 4; # including startpoint, >= 2
@@ -705,8 +706,6 @@ end
 
 close_visualization(); # closes the MeshCat visualization
 
-# Question: realtime is super fast , thrust wird sehr groß visuell
-# 
 
 test_env = VtolEnv(;name = "test_cf");
 
@@ -765,7 +764,7 @@ function validate(num_models, num_test)
     
 end;
 
-EVALUATION = true
+
 if EVALUATION
     
     num_model = Int(steps / save_freq); 
@@ -804,51 +803,56 @@ else
     results_path = results_path * "fast/"
 end
 
-iterations = load(results_path * "iterations.jld")["data"];
-avg_compl_time = load(results_path * "avg_comp_time.jld")["data"];
-avg_velocity = load(results_path * "avg_velocity.jld")["data"];
-rewards = load(results_path * "reward.jld")["data"];
-success_rate = load(results_path * "success_rate.jld")["data"];
+if EVALUATION
+    iterations = load(results_path * "iterations.jld")["data"];
+    avg_compl_time = load(results_path * "avg_comp_time.jld")["data"];
+    avg_velocity = load(results_path * "avg_velocity.jld")["data"];
+    rewards = load(results_path * "reward.jld")["data"];
+    success_rate = load(results_path * "success_rate.jld")["data"];
 
-fig_path = pwd() * "/plots/";
-if SLOW_MODE
-    fig_path = fig_path * "slow/"
-else
-    fig_path = fig_path * "fast/"
-end
+    fig_path = pwd() * "/plots/";
+    if SLOW_MODE
+        fig_path = fig_path * "slow/"
+    else
+        fig_path = fig_path * "fast/"
+    end
 
-plot(iterations, rewards, xlabel="Iterations", ylabel="Reward", legend = false, xformatter = :scientific)
+    plot(iterations, rewards, xlabel="Iterations", ylabel="Reward", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "reward.svg")
+    savefig(fig_path * "reward.svg")
 
-plot(iterations, success_rate, xlabel="Iterations", ylabel="Success Rate", legend = false, xformatter = :scientific)
+    plot(iterations, success_rate, xlabel="Iterations", ylabel="Success Rate", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "success_rate.svg")
+    savefig(fig_path * "success_rate.svg")
 
-plot(iterations, avg_velocity, xlabel="Iterations", ylabel="Average Velocity", legend = false, xformatter = :scientific)
+    plot(iterations, avg_velocity, xlabel="Iterations", ylabel="Average Velocity", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "avg_velocity.svg")
+    savefig(fig_path * "avg_velocity.svg")
 
-plot(iterations, avg_compl_time, xlabel="Iterations", ylabel="Average Completion Time", legend = false, xformatter = :scientific)
+    plot(iterations, avg_compl_time, xlabel="Iterations", ylabel="Average Completion Time", legend = false, xformatter = :scientific)
 
-savefig(fig_path * "avg_comp_time.svg")
+    savefig(fig_path * "avg_comp_time.svg")
+end;
 
-create_visualization();
 
-# TODO: load_model as desired
-vid_env = VtolEnv(;name = "testVTOL", visualization = true, realtime = true);
+if EVALUATION
+    create_visualization();
 
-if SLOW_MODE
-    path = "./RL_models_slow/"
-    load_model = 500_000
-    println("slow mode")
-else
-    path = "./RL_models_fast/"
-    load_model = 1_250_000
-    println("fast mode")
-end
-agent.policy.approximator = loadModel(path,load_model); 
-RLBase.reset!(vid_env)
-run(agent.policy, vid_env, StopAfterEpisode(2))
+    # TODO: load_model as desired
+    vid_env = VtolEnv(;name = "testVTOL", visualization = true, realtime = true);
 
-close_visualization();
+    if SLOW_MODE
+        path = "./RL_models_slow/"
+        load_model = 500_000
+        println("slow mode")
+    else
+        path = "./RL_models_fast/"
+        load_model = 1_250_000
+        println("fast mode")
+    end
+    agent.policy.approximator = loadModel(path,load_model); 
+    RLBase.reset!(vid_env)
+    run(agent.policy, vid_env, StopAfterEpisode(2))
+
+    close_visualization();
+end;
