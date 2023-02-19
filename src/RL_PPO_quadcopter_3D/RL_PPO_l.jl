@@ -582,9 +582,9 @@ UPDATE_FREQ = 1024
 function saveModel(t, agent, env)
     model = cpu(agent.policy.approximator)
     if SLOW_MODE
-        f = joinpath("./src/3d/RL_models_slow/", "cf_ppo_$(t).bson")
+        f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_slow/", "cf_ppo_$(t).bson")
     else
-        f = joinpath("./src/3d/RL_models_fast/", "cf_ppo_$t.bson") 
+        f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_fast/", "cf_ppo_$t.bson") 
     end
     @save f model
     println("parameters at step $t saved to $f")
@@ -592,7 +592,7 @@ end;
 
 
 function loadModel()
-    f = joinpath("./src/3d/RL_models_slow/", "cf_ppo_$(load_from_slow_step).bson")
+    f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_slow/", "cf_ppo_$(load_from_slow_step).bson")
     @load f model
     return model
 end;
