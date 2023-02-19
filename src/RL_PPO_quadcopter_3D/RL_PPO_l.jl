@@ -592,7 +592,7 @@ end;
 
 
 function loadModel()
-    f = joinpath("./src/3d/load_model/", "cf_ppo_$(load_from_slow_step).bson")
+    f = joinpath("./src/3d/RL_models_slow/", "cf_ppo_$(load_from_slow_step).bson")
     @load f model
     return model
 end;
@@ -685,7 +685,9 @@ hook = ComposedHook(
 );
 
 #todo load model
-agent.policy.approximator = loadModel(); 
+if !SLOW_MODE
+    agent.policy.approximator = loadModel(); 
+end;
 
 if TRAINING
     ReinforcementLearning.run(
