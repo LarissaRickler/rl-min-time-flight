@@ -37,7 +37,9 @@ EVALUATION = false;
 create_remote_visualization();
 
 # TensorBoard
-logger = TBLogger("tensorboard_PPO", tb_increment)
+if TRAINING
+    logger = TBLogger("tensorboard_PPO", tb_increment)
+end
 
 # indicates how many threads Julia was started with. This is important for the multi-threaded environment
 Threads.nthreads()
