@@ -110,7 +110,7 @@ function VtolEnv(;
 
     
     state_space = Space( # Three continuous values in state space.
-        ClosedInterval{T}[#todo
+        ClosedInterval{T}[
             typemin(T)..typemax(T), # 1 x
             typemin(T)..typemax(T), # 2 y
             typemin(T)..typemax(T), # 3 z
@@ -172,7 +172,7 @@ function VtolEnv(;
         action_space,
         state_space,
         zeros(T, length(state_space)), # current state, needs to be extended.
-        [0.25; 0.25; 0.25; 0.25],#rand(action_space), #todo test with random
+        [0.25; 0.25; 0.25; 0.25], # rand(action_space)
         false, # episode done ?
         0.0, # time
         rng, # random number generator  
@@ -263,7 +263,7 @@ function computeReward(env::VtolEnv{A,T}) where {A,T}
 
     s = scale_for_slowmode(true, v_min, v_max, d_max, env.x_W, env.projected_position, env.v_B)
     
-    # TODO: test norming
+    
     k_p = 5.0 * s #/ env.norm_way # factor for progress (between current position and last position) reward 
     r_p = (env.progress - env.progress_prev); # reward for progress (between current position and last position)
 
@@ -333,11 +333,11 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
     env.progress = 0.0;
     env.progress_prev = 0.0;
         
- #todo
+ 
     env.state = [env.x_W[1]; # 1 position along x
                  env.x_W[2]; # 2 position along y
                  env.x_W[3]; # 3 position along z
-#todo right R_W?
+
                  env.R_W[1,1];
                  env.R_W[2,1];
                  env.R_W[3,1];
@@ -368,7 +368,7 @@ function RLBase.reset!(env::VtolEnv{A,T}) where {A,T}
     
 
     env.t = 0.0; # time 0s
-    env.action = [0.25; 0.25; 0.25; 0.25] # normalized # todo try with 0.0
+    env.action = [0.25; 0.25; 0.25; 0.25] # normalized 
     #env.last_action = [0.255; 0.255; 0.255; 0.255] # normalized
     #env.current_action = [0.255; 0.255; 0.255; 0.255] # normalized
 
@@ -476,7 +476,6 @@ function _step!(env::VtolEnv, next_action)
     
     
     # State space
-    #todo
     env.state[1] = env.x_W[1];
     env.state[2] = env.x_W[2];
     env.state[3] = env.x_W[3];
@@ -500,7 +499,7 @@ function _step!(env::VtolEnv, next_action)
     env.state[16] = env.waypoints[env.current_point][1] - env.x_W[1] # 13 position error to next gate along x
     env.state[17] = env.waypoints[env.current_point][2] - env.x_W[2]; # 14 position error to next gate along z
     env.state[18] = env.waypoints[env.current_point][3] - env.x_W[3]; # 15 position error to next gate along z
-     #todo            
+                
     if env.current_point <= env.num_waypoints
         env.state[19] = env.waypoints[env.current_point + 1][1] - env.waypoints[env.current_point][1] ; # 16 way to next next gate x (next next gate - next gate), dummy integriert
         env.state[20] = env.waypoints[env.current_point + 1][2] - env.waypoints[env.current_point][2]; # 17 way to next next gate y (next next gate - next gate), dummy integriert
@@ -516,7 +515,7 @@ function _step!(env::VtolEnv, next_action)
          norm(env.ω_B) > 100.0 || 
          norm(env.v_B) > 100.0 || # stop if body is too fast_point 
         env.x_W[3] < -1.0 || # stop if body is below -5m
-        env.t > env.num_waypoints * 3.0 ||# stop after 3s per point #todo set in fast learning phase
+        env.t > env.num_waypoints * 3.0 ||# stop after 3s per point 
         norm(env.x_W - env.projected_position) > 5.0 || # too far off the path 
         env.reached_goal == trues(env.num_waypoints)
 
@@ -584,9 +583,9 @@ UPDATE_FREQ = 1024
 function saveModel(t, agent, env)
     model = cpu(agent.policy.approximator)
     if SLOW_MODE
-        f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_slow/", "cf_ppo_$(20_000_000 + t).bson")
+        f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_slow/", "cf_ppo_$(t).bson")
     else
-        f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_fast/", "cf_ppo_$(20_000_000 + t).bson") 
+        f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_fast/", "cf_ppo_$(t).bson") 
     end
     @save f model
     println("parameters at step $t saved to $f")
@@ -594,7 +593,7 @@ end;
 
 
 function loadModel()
-    f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models/", "cf_ppo_$(load_from_slow_step).bson")
+    f = joinpath("./src/RL_PPO_quadcopter_3D/RL_models_slow/", "cf_ppo_$(load_from_slow_step).bson")
     @load f model
     return model
 end;
@@ -611,7 +610,7 @@ episode_test_reward_hook = TotalRewardPerEpisode(;is_display_on_exit=false)
 # create a env only for reward test
 test_env = VtolEnv(;name = "test_cf", visualization = visualize_validation, realtime = visualize_validation);
 
-# todo merge with above
+
 function validate_policy(t, agent, env)
     # for validation extract the policy from the agend
     run(agent.policy, test_env, StopAfterEpisode(1), 
@@ -639,9 +638,9 @@ test_env = VtolEnv(;name = "test_cf", visualization = true, realtime = true);
 #test_env = VtolEnv(;name = "test_cf", visualization = false, realtime = false);
 
 # number of steps
-steps_slow = 20_000_000
-steps_fast = 20_000_000
-load_from_slow_step = 20_000_000 # TODO: choose slow model
+steps_slow = 40_000_000
+steps_fast = 40_000_000
+load_from_slow_step = 40_000_000 # TODO: choose slow model
 
 save_freq = 100_000
 validate_freq = 100_000
@@ -686,11 +685,10 @@ hook = ComposedHook(
     =#
 );
 
-#todo load model
+
 if !SLOW_MODE
     agent.policy.approximator = loadModel(); 
 end;
-agent.policy.approximator = loadModel(); #todo
 
 if TRAINING
     ReinforcementLearning.run(
@@ -723,7 +721,6 @@ end;
 function validate(num_models, num_test)
     episode_test_reward_hook = TotalRewardPerEpisode(;is_display_on_exit=false)
     # create a env only for reward test
-    #todo evtl mit multithreding
     for i in 1:num_models
           
         sum_rewards_model = 0;
@@ -789,7 +786,7 @@ if EVALUATION
         results_path = results_path * "fast/"
     end
     
-    save(results_path * "iterations.jld", "data", [1:num_model] * save_freq) # todo save size auch in 2d
+    save(results_path * "iterations.jld", "data", [1:num_model] * save_freq) 
     
     save(results_path * "avg_comp_time.jld", "data", avg_compl_time)
     
