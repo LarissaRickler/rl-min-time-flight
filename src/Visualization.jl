@@ -1,6 +1,6 @@
 module Visualization
 
-export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators, visualize_waypoints, create_Crazyflie, set_Crazyflie_actuators, create_Office
+export create_remote_visualization, create_visualization, create_VTOL, create_sphere, set_transform, close_visualization, create_sphere, set_arrow, transform_arrow, set_actuators, visualize_waypoints, create_Crazyflie, set_Crazyflie_actuators, create_Office, set_color
 
 
 using MeshCat
@@ -269,6 +269,19 @@ Deletes the visualization.
 """
 function close_visualization()
     delete!(vis); 
+end
+
+
+"""
+    set_color(name::AbstractString, color_vec::AbstractVector=[0.8; 0.8; 0.8; 1.0])
+    
+Set VTOL color
+"""
+function set_color(name::AbstractString, color_vec::AbstractVector=[0.8; 0.8; 0.8; 1.0])
+
+
+    color::RGBA{Float32}=RGBA{Float32}(color_vec[1], color_vec[2], color_vec[3], color_vec[4])
+    setprop!(vis[name], "color", color)
 end
 
 
