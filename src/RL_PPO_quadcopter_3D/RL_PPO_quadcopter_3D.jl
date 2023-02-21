@@ -640,7 +640,7 @@ test_env = VtolEnv(;name = "test_cf", visualization = true, realtime = true);
 # number of steps
 steps_slow = 40_000_000
 steps_fast = 40_000_000
-load_from_slow_step = 40_000_000 # TODO: choose slow model
+load_from_slow_step = 30_000_000 # TODO: choose slow model
 
 save_freq = 100_000
 validate_freq = 100_000
