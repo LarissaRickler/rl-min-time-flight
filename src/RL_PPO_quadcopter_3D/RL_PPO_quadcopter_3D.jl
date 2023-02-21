@@ -30,7 +30,7 @@ using BSON: @save, @load # save mode
 # TODO: set as desired
 R_TOL = 0.5;
 N_WAYPOINTS = 4; # including startpoint, >= 2
-SLOW_MODE = true;
+SLOW_MODE = false;
 TRAINING = true;
 EVALUATION = false;
 
