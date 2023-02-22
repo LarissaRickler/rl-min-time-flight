@@ -5,7 +5,7 @@ using Random;
 using Distributions;
 
 
-export calculateAngle, calculate_progress, generate_trajectory
+export calculateAngle, calculate_progress, generate_trajectory, generate_straight_trajectory
 
 
 """
@@ -75,6 +75,20 @@ function testRotationMatrix(R)
 end
 
 
+"""
+generate_straight_trajectory(num_waypoints::Int)
+    
+Generates groundlevel trajectory with num_waypoints waypoints (including starting point at [0.0, 0.0, 0.0]).
+"""
+function generate_straight_trajectory(num_waypoints::Int) #DEBUG: harder trajectories
+    waypoints = Vector{Vector{Float64}}(undef, num_waypoints) 
+    waypoints[1] = [11.0, 3.0, 0.4]# zero is first waypoint 
+    for i in 2:num_waypoints
+        # DEBUG: maybe different ranges
+        waypoints[i] = waypoints[i - 1] + [rand(Uniform(-8.0,0.0)), rand(Uniform(-4.0,4.0)), 0.0]
+    end
+    return waypoints
+end
 
 
 function projectSO3C(R)

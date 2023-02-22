@@ -29,6 +29,6 @@ export eth_vtol_param, brett_vtol3_param, brett_simple_MC, crazyflie_param #, vt
 
 include("Utils.jl")
 using .Utils;
-export calculateAngle, calculate_progress, generate_trajectory
+export calculateAngle, calculate_progress, generate_trajectory, generate_straight_trajectory
 
 end # end of module
