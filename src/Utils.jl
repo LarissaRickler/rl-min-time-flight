@@ -55,23 +55,14 @@ end
     
 Generates trajectory with num_waypoints waypoints (including starting point at [0.0, 0.0, 0.0]).
 """
-function generate_trajectory(num_waypoints::Int) #DEBUG: harder trajectories
+function generate_trajectory(num_waypoints::Int) #TODO: harder trajectories
     waypoints = Vector{Vector{Float64}}(undef, num_waypoints) 
     waypoints[1] = [0.0, 0.0, 0.0] # zero is first waypoint 
-#     waypoints[2] = [4.0, 0.0, 4.0] # debug
     for i in 2:num_waypoints
-        # DEBUG: maybe different ranges
+        # TODO: maybe different ranges
         waypoints[i] = waypoints[i - 1] + [rand(Uniform(-3,3)), rand(Uniform(-3,3)), rand(Uniform(0.5,3))]
     end
     return waypoints
-end
-
-
-function testRotationMatrix(R)
-
-    determinante = (det(R) ≈ 1)
-    #inverse = (transpose(R) == inv(R))
-    return determinante# && inverse
 end
 
 
@@ -88,6 +79,13 @@ function generate_straight_trajectory(num_waypoints::Int) #DEBUG: harder traject
         waypoints[i] = waypoints[i - 1] + [rand(Uniform(-8.0,0.0)), rand(Uniform(-4.0,4.0)), 0.0]
     end
     return waypoints
+end
+
+
+function testRotationMatrix(R)
+    determinante = (det(R) ≈ 1)
+    #inverse = (transpose(R) == inv(R))
+    return determinante# && inverse
 end
 
 
