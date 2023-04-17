@@ -4,9 +4,3 @@
 *.DS_Store
 .ipynb_checkpoints
 *checkpoint.ipynb
-
-plots*
-videos
-RL_models_*
-
-tensorboard_*
