@@ -51,6 +51,25 @@ end
 
 
 """
+    generate_trajectory_2D(num_waypoints::Int)
+    
+Generates 2D trajectory with num_waypoints waypoints (including starting point at [0.0, 0.0, 0.0]).
+"""
+function generate_trajectory_2D(num_waypoints::Int) #DEBUG: harder trajectories
+    waypoints = Vector{Vector{Float64}}(undef, num_waypoints) 
+    waypoints[1] = [0.0, 0.0, 0.0] # zero is first waypoint 
+#     waypoints[2] = [4.0, 0.0, 4.0] # debug
+    for i in 2:num_waypoints
+        # DEBUG: maybe different ranges
+        waypoints[i] = waypoints[i - 1] + [rand(Uniform(-7,7)), 0.0, rand(Uniform(1.5,7))]
+        waypoints[i][2] = 0.0 
+    end
+    return waypoints
+end
+
+
+
+"""
     generate_trajectory(num_waypoints::Int)
     
 Generates trajectory with num_waypoints waypoints (including starting point at [0.0, 0.0, 0.0]).
